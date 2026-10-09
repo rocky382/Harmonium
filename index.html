@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- Viewport locked to prevent manual and programmatic scaling -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
   <title>Harmonium Pro - Vocal Riyaz</title>
 
   <!-- iOS Safari "Add to Home Screen" Settings -->
@@ -12,7 +13,7 @@
   <link rel="apple-touch-icon" id="apple-touch-icon" sizes="180x180">
   <link rel="icon" id="site-favicon" type="image/png">
 
-  <!-- Android / PWA Manifest (Embedded) -->
+  <!-- Android / PWA Manifest -->
   <link rel="manifest" href='data:application/manifest+json,{"name":"Harmonium Pro","short_name":"Harmonium","start_url":".","display":"standalone","orientation":"landscape","background_color":"#120502","theme_color":"#120502"}'>
 
   <style>
@@ -41,15 +42,18 @@
       -webkit-touch-callout: none;
       margin: 0;
       padding: 0;
+      touch-action: none; /* Disable native browser touch gestures */
     }
 
-    body, html {
+    html, body {
+      position: fixed; /* Prevents rubber-banding/scroll bouncing on iOS */
       width: 100%;
       height: 100%;
       overflow: hidden;
       background: #000;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif;
-      touch-action: none;
+      overscroll-behavior: none;
+      -webkit-text-size-adjust: 100%; /* Disables iOS automatic text-size zoom */
     }
 
     #rotate-modal {
@@ -159,15 +163,18 @@
       letter-spacing: 0.5px;
     }
 
+    /* Set font-size to 16px to prevent iOS auto-zoom on select focus */
     .select-menu {
       background: #180803;
       color: var(--brass-gold);
       border: 1px solid var(--brass-dark);
       border-radius: 5px;
-      font-size: 11px;
+      font-size: 16px;
       font-weight: 700;
-      padding: 3px 5px;
+      padding: 2px 4px;
       outline: none;
+      transform: scale(0.72);
+      transform-origin: center center;
     }
 
     .toggle-stop {
@@ -196,6 +203,7 @@
       background: #3b1608;
       border-radius: 3px;
       outline: none;
+      touch-action: pan-x;
     }
 
     .air-slider::-webkit-slider-thumb {
@@ -438,7 +446,39 @@
 
   <script>
     /* -------------------------------------------------------------
-       1. EMBEDDED RETINA IPHONE HOME SCREEN ICON GENERATOR
+       1. HARDWARE ZOOM, PINCH & GESTURE LOCKOUT PIPELINE
+       ------------------------------------------------------------- */
+    // A. Intercept iOS WebKit Pinch Gestures
+    ['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
+      document.addEventListener(evt, (e) => e.preventDefault(), { passive: false });
+    });
+
+    // B. Block Double-Tap Zoom across entire viewport
+    let lastTapTime = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTapTime <= 300) {
+        e.preventDefault();
+      }
+      lastTapTime = now;
+    }, { passive: false });
+
+    // C. Block Desktop trackpad pinch & wheel zoom (Ctrl + Wheel)
+    window.addEventListener('wheel', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    // D. Block Keyboard zoom shortcuts (Ctrl/Cmd + '+', '-', '0')
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && ['+', '-', '=', '0'].includes(e.key)) {
+        e.preventDefault();
+      }
+    });
+
+    /* -------------------------------------------------------------
+       2. EMBEDDED RETINA IPHONE HOME SCREEN ICON GENERATOR
        ------------------------------------------------------------- */
     (function createRetinaAppleIcon() {
       const canvas = document.createElement('canvas');
@@ -446,7 +486,6 @@
       canvas.height = 180;
       const ctx = canvas.getContext('2d');
 
-      // Teakwood Body Background
       const bg = ctx.createLinearGradient(0, 0, 180, 180);
       bg.addColorStop(0, '#591f0d');
       bg.addColorStop(0.5, '#2b0e06');
@@ -454,23 +493,19 @@
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, 180, 180);
 
-      // Brass Inset Border
       ctx.strokeStyle = '#ffcf33';
       ctx.lineWidth = 4;
       ctx.strokeRect(8, 8, 164, 164);
 
-      // Subtle Key Representation (Harmonium Keys)
       ctx.fillStyle = '#fffdf7';
       ctx.fillRect(36, 95, 32, 60);
       ctx.fillRect(74, 95, 32, 60);
       ctx.fillRect(112, 95, 32, 60);
 
-      // Black Reeds
       ctx.fillStyle = '#111';
       ctx.fillRect(58, 95, 20, 36);
       ctx.fillRect(102, 95, 20, 36);
 
-      // Golden Medallion
       ctx.beginPath();
       ctx.arc(90, 52, 28, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(255, 207, 51, 0.15)';
@@ -479,7 +514,6 @@
       ctx.lineWidth = 2.5;
       ctx.stroke();
 
-      // Devanagari "सा" Emblem
       ctx.fillStyle = '#ffbe26';
       ctx.font = 'bold 30px "Noto Sans Devanagari", sans-serif';
       ctx.textAlign = 'center';
@@ -492,7 +526,7 @@
     })();
 
     /* -------------------------------------------------------------
-       2. AUDIO SYNTHESIS & REAL-TIME CONTROLS
+       3. AUDIO SYNTHESIS & REAL-TIME CONTROLS
        ------------------------------------------------------------- */
     const NOTES_LIST = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -945,7 +979,6 @@
 
     window.addEventListener('resize', () => buildKeyboardLayout());
     window.addEventListener('DOMContentLoaded', () => buildKeyboardLayout());
-    document.addEventListener('gesturestart', (e) => e.preventDefault());
   </script>
 </body>
 </html>
