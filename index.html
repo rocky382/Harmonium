@@ -5,19 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
   <title>Harmonium Pro</title>
 
-  <!-- iOS STANDALONE / HEADLESS META TAGS -->
+  <!-- iOS STANDALONE / HEADLESS TAGS -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-touch-fullscreen" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Harmonium">
 
-  <!-- LINK TO REPO MANIFEST -->
+  <!-- PWA MANIFEST & ICONS -->
   <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" id="apple-touch-icon" sizes="180x180">
   <link rel="icon" id="site-favicon" type="image/png">
 
-  <!-- SCRIPT TO REGISTER SERVICE WORKER -->
+  <!-- SERVICE WORKER REGISTRATION (REQUIRED FOR HEADLESS PWA) -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -25,3 +25,953 @@
       });
     }
   </script>
+
+  <style>
+    :root {
+      --wood-dark: #0f0402;
+      --wood-mid: #2b0e06;
+      --wood-light: #521c0b;
+      --brass-gold: #ffcf33;
+      --brass-dark: #8c6712;
+      --ivory: #fffef9;
+      --ivory-pressed: #dcd4c0;
+      --ebony: #181818;
+      --ebony-pressed: #2c2c2c;
+      --sa-color: #ff3b19;
+      --swara-gold: #ffbe26;
+      --komal-color: #4a5568;
+      --safe-l: env(safe-area-inset-left, 0px);
+      --safe-r: env(safe-area-inset-right, 0px);
+      --safe-b: env(safe-area-inset-bottom, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      margin: 0;
+      padding: 0;
+      touch-action: none;
+    }
+
+    html, body {
+      position: fixed;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #000;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif;
+      overscroll-behavior: none;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    #rotate-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #140502;
+      color: var(--brass-gold);
+      z-index: 999999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+    }
+
+    #rotate-modal svg {
+      width: 56px;
+      height: 56px;
+      fill: var(--brass-gold);
+      margin-bottom: 14px;
+      animation: rotate-anim 2.2s infinite ease-in-out;
+    }
+
+    @keyframes rotate-anim {
+      0%, 20% { transform: rotate(0deg); }
+      50%, 70% { transform: rotate(90deg); }
+      100% { transform: rotate(0deg); }
+    }
+
+    @media screen and (orientation: portrait) {
+      #rotate-modal { display: flex; }
+    }
+
+    .harmonium-app {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: radial-gradient(circle at 50% 10%, var(--wood-light) 0%, var(--wood-mid) 50%, var(--wood-dark) 100%);
+      padding-left: var(--safe-l);
+      padding-right: var(--safe-r);
+      padding-bottom: var(--safe-b);
+      position: relative;
+    }
+
+    .brass-strip {
+      height: 3px;
+      background: linear-gradient(90deg, #423009, var(--brass-gold), #7a5a14, var(--brass-gold), #423009);
+    }
+
+    .top-bar {
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      background: linear-gradient(180deg, rgba(16, 6, 3, 0.98), rgba(30, 11, 5, 0.94));
+      border-bottom: 2px solid var(--brass-dark);
+      z-index: 20;
+    }
+
+    .brand-box {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: var(--brass-gold);
+      text-transform: uppercase;
+      text-shadow: 0 1px 3px #000;
+    }
+
+    .rocky-tag {
+      font-size: 8px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 1.2px;
+      background: linear-gradient(90deg, #c62828, #f57c00);
+      padding: 1px 5px;
+      border-radius: 3px;
+      width: fit-content;
+      margin-top: 1px;
+    }
+
+    .controls-deck {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ctrl-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .ctrl-label {
+      font-size: 7.5px;
+      font-weight: 700;
+      color: var(--brass-gold);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .select-menu {
+      background: #180803;
+      color: var(--brass-gold);
+      border: 1px solid var(--brass-dark);
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 2px 4px;
+      outline: none;
+      transform: scale(0.72);
+      transform-origin: center center;
+    }
+
+    .toggle-stop {
+      background: #240c05;
+      color: #bbb;
+      border: 1px solid var(--brass-dark);
+      border-radius: 5px;
+      padding: 4px 7px;
+      font-size: 9px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+
+    .toggle-stop.active {
+      background: linear-gradient(180deg, #f5be38, #b38210);
+      color: #120501;
+      border-color: #ffd700;
+      box-shadow: 0 0 8px rgba(255, 207, 51, 0.45);
+    }
+
+    .air-slider {
+      -webkit-appearance: none;
+      width: 52px;
+      height: 5px;
+      background: #3b1608;
+      border-radius: 3px;
+      outline: none;
+      touch-action: pan-x;
+    }
+
+    .air-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--brass-gold);
+      box-shadow: 0 0 3px #000;
+      cursor: pointer;
+    }
+
+    .legend-strip {
+      height: 22px;
+      background: rgba(12, 4, 2, 0.95);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      font-size: 9.5px;
+      color: #baa490;
+      border-bottom: 1px solid rgba(255, 207, 51, 0.2);
+    }
+
+    .legend-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .legend-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .keyboard-stage {
+      flex: 1;
+      position: relative;
+      background: #080302;
+      display: flex;
+      padding: 2px 0 3px 0;
+      overflow: hidden;
+    }
+
+    .keys-wrapper {
+      position: relative;
+      display: flex;
+      width: 100%;
+      height: 100%;
+    }
+
+    .white-key {
+      flex: 1;
+      height: 100%;
+      background: linear-gradient(180deg, #eae3d5 0%, var(--ivory) 40%, #f0e9dc 90%, #b8ab96 100%);
+      border: 1px solid #6b604e;
+      border-top: none;
+      border-radius: 0 0 5px 5px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding-bottom: 8px;
+      position: relative;
+      z-index: 1;
+      box-shadow: inset 0 -3px 4px rgba(0,0,0,0.15), 1px 0 2px rgba(0,0,0,0.25);
+      cursor: pointer;
+    }
+
+    .white-key.is-pressed {
+      background: linear-gradient(180deg, var(--ivory-pressed) 0%, #bfb49e 100%) !important;
+      transform: translateY(2px);
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.5) !important;
+    }
+
+    .black-key {
+      position: absolute;
+      height: 60%;
+      background: linear-gradient(180deg, #3c3c3c 0%, var(--ebony) 25%, #050505 100%);
+      border: 1px solid #000;
+      border-radius: 0 0 4px 4px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding-bottom: 6px;
+      z-index: 10;
+      box-shadow: 2px 3px 6px rgba(0,0,0,0.7), inset 0 1px 1px rgba(255,255,255,0.2);
+      cursor: pointer;
+    }
+
+    .black-key.is-pressed {
+      background: linear-gradient(180deg, #222 0%, var(--ebony-pressed) 100%) !important;
+      transform: translateY(2px);
+      box-shadow: 1px 1px 3px rgba(0,0,0,0.9) !important;
+    }
+
+    .swara-badge {
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.1;
+      padding: 1.5px 4px;
+      border-radius: 4px;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .pitch-label {
+      font-size: 8px;
+      font-weight: 700;
+      color: #696253;
+      margin-top: 2px;
+      pointer-events: none;
+    }
+
+    .black-key .pitch-label {
+      color: #8c8c8c;
+    }
+
+    .sa-glow {
+      background: var(--sa-color) !important;
+      color: #fff !important;
+      border: 1px solid #ff9980;
+      transform: scale(1.1);
+      box-shadow: 0 0 10px rgba(255, 59, 25, 0.85);
+    }
+
+    .shuddha-glow {
+      background: linear-gradient(180deg, #ffe066, var(--swara-gold)) !important;
+      color: #2e1600 !important;
+      transform: scale(1.05);
+      box-shadow: 0 0 8px rgba(255, 190, 38, 0.6);
+    }
+
+    .komal-glow {
+      background: var(--komal-color) !important;
+      color: #f1f5f9 !important;
+      font-size: 9px;
+      opacity: 0.85;
+    }
+
+    .saptak-dot {
+      font-size: 8px;
+      line-height: 4px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="rotate-modal">
+    <svg viewBox="0 0 24 24">
+      <path d="M16 1H8C6.34 1 5 2.34 5 4v16c0 1.66 1.34 3 3 3h8c1.66 0 3-1.34 3-3V4c0-1.66-1.34-3-3-3zm1 18H7V5h10v14z"/>
+    </svg>
+    <h2 style="font-size: 18px; margin-bottom: 6px;">Flip to Landscape</h2>
+    <p style="font-size: 13px; opacity: 0.85;">Harmonium Pro requires landscape orientation.</p>
+  </div>
+
+  <div class="harmonium-app">
+    <div class="brass-strip"></div>
+
+    <header class="top-bar">
+      <div class="brand-box">
+        <span class="brand-title">Harmonium Pro</span>
+        <span class="rocky-tag">VOCAL RIYAZ</span>
+      </div>
+
+      <div class="controls-deck">
+        <div class="ctrl-item">
+          <span class="ctrl-label">Scale (Sa)</span>
+          <select id="scale-dropdown" class="select-menu">
+            <option value="C">C (White 1)</option>
+            <option value="C#" selected>C# (Black 1)</option>
+            <option value="D">D (White 2)</option>
+            <option value="D#">D# (Black 2)</option>
+            <option value="E">E (White 3)</option>
+            <option value="F">F (White 4)</option>
+            <option value="F#">F# (Black 3)</option>
+            <option value="G">G (White 5)</option>
+            <option value="G#">G# (Black 4)</option>
+            <option value="A">A (White 6)</option>
+            <option value="A#">A# (Black 5)</option>
+            <option value="B">B (White 7)</option>
+          </select>
+        </div>
+
+        <div class="ctrl-item">
+          <span class="ctrl-label">Script</span>
+          <button id="script-toggle" class="toggle-stop active">देव / Eng</button>
+        </div>
+
+        <div class="ctrl-item">
+          <span class="ctrl-label">Male Reed</span>
+          <button id="male-stop" class="toggle-stop active">Male 4′</button>
+        </div>
+
+        <div class="ctrl-item">
+          <span class="ctrl-label">Bass Reed</span>
+          <button id="bass-stop" class="toggle-stop active">Bass 8′</button>
+        </div>
+
+        <div class="ctrl-item">
+          <span class="ctrl-label">Continuous</span>
+          <button id="drone-stop" class="toggle-stop">Sur (Sa)</button>
+        </div>
+
+        <div class="ctrl-item">
+          <span class="ctrl-label">Bellows</span>
+          <input type="range" id="bellows-slider" class="air-slider" min="0.3" max="1" step="0.05" value="0.9">
+        </div>
+      </div>
+    </header>
+
+    <div class="legend-strip">
+      <div class="legend-group">
+        <span class="legend-item"><span class="legend-dot" style="background:var(--sa-color);"></span> <b>Sa</b> (Root)</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--swara-gold);"></span> <b>Shuddha</b> Swaras</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--komal-color);"></span> <b>Komal/Teevra</b></span>
+      </div>
+      <div style="font-weight:700; color:var(--brass-gold);">
+        Range: Mandra Ma (म॒) ➔ Taar Ma (मं)
+      </div>
+    </div>
+
+    <main class="keyboard-stage" id="keyboard-stage">
+      <div class="keys-wrapper" id="keys-wrapper"></div>
+    </main>
+
+    <div class="brass-strip"></div>
+  </div>
+
+  <script>
+    // 1. Prevent iOS from opening new Safari window tabs
+    if (("standalone" in window.navigator) && window.navigator.standalone) {
+      document.addEventListener('click', function(e) {
+        let node = e.target;
+        while (node && node.nodeName !== 'A' && node.nodeName !== 'HTML') node = node.parentNode;
+        if (node && node.nodeName === 'A' && node.href) {
+          e.preventDefault();
+          window.location.href = node.href;
+        }
+      }, false);
+    }
+
+    // 2. Hardware zoom lockout
+    ['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
+      document.addEventListener(evt, (e) => e.preventDefault(), { passive: false });
+    });
+
+    let lastTapTime = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTapTime <= 300) e.preventDefault();
+      lastTapTime = now;
+    }, { passive: false });
+
+    // 3. Retina App Icon Generator
+    (function createRetinaAppleIcon() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 180;
+      canvas.height = 180;
+      const ctx = canvas.getContext('2d');
+
+      const bg = ctx.createLinearGradient(0, 0, 180, 180);
+      bg.addColorStop(0, '#591f0d');
+      bg.addColorStop(0.5, '#2b0e06');
+      bg.addColorStop(1, '#0e0402');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, 180, 180);
+
+      ctx.strokeStyle = '#ffcf33';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(8, 8, 164, 164);
+
+      ctx.fillStyle = '#fffdf7';
+      ctx.fillRect(36, 95, 32, 60);
+      ctx.fillRect(74, 95, 32, 60);
+      ctx.fillRect(112, 95, 32, 60);
+
+      ctx.fillStyle = '#111';
+      ctx.fillRect(58, 95, 20, 36);
+      ctx.fillRect(102, 95, 20, 36);
+
+      ctx.beginPath();
+      ctx.arc(90, 52, 28, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 207, 51, 0.15)';
+      ctx.fill();
+      ctx.strokeStyle = '#ffcf33';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffbe26';
+      ctx.font = 'bold 30px "Noto Sans Devanagari", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('सा', 90, 53);
+
+      const iconUrl = canvas.toDataURL('image/png');
+      document.getElementById('apple-touch-icon').href = iconUrl;
+      document.getElementById('site-favicon').href = iconUrl;
+    })();
+
+    // 4. Acoustic Reed Engine
+    const NOTES_LIST = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+    const SWARAS = {
+      0:  { name: 'Sa',  dev: 'सा',  type: 'sa' },
+      1:  { name: 're',  dev: 'रे॒', type: 'komal' },
+      2:  { name: 'Re',  dev: 'रे',  type: 'shuddha' },
+      3:  { name: 'ga',  dev: 'ग॒',  type: 'komal' },
+      4:  { name: 'Ga',  dev: 'ग',  type: 'shuddha' },
+      5:  { name: 'Ma',  dev: 'म',  type: 'shuddha' },
+      6:  { name: 'Ma\'',dev: 'म॑',  type: 'teevra' },
+      7:  { name: 'Pa',  dev: 'प',  type: 'shuddha' },
+      8:  { name: 'dha', dev: 'ध॒',  type: 'komal' },
+      9:  { name: 'Dha', dev: 'ध',  type: 'shuddha' },
+      10: { name: 'ni',  dev: 'नि॒', type: 'komal' },
+      11: { name: 'Ni',  dev: 'नि',  type: 'shuddha' }
+    };
+
+    class HarmoniumAcousticEngine {
+      constructor() {
+        this.ctx = null;
+        this.masterOut = null;
+        this.maleProfile = null;
+        this.bassProfile = null;
+        this.activeVoices = new Map();
+        this.droneVoice = null;
+        this.enableMale = true;
+        this.enableBass = true;
+        this.airPressure = 0.9;
+      }
+
+      initAudio() {
+        if (!this.ctx) {
+          const AudioClass = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioClass({ latencyHint: 'interactive' });
+          this.buildReedHarmonics();
+
+          this.masterOut = this.ctx.createGain();
+          this.masterOut.gain.setValueAtTime(this.airPressure, this.ctx.currentTime);
+
+          this.boxFilter = this.ctx.createBiquadFilter();
+          this.boxFilter.type = 'peaking';
+          this.boxFilter.frequency.value = 460;
+          this.boxFilter.Q.value = 1.8;
+          this.boxFilter.gain.value = 3.5;
+
+          this.jaaliFilter = this.ctx.createBiquadFilter();
+          this.jaaliFilter.type = 'peaking';
+          this.jaaliFilter.frequency.value = 2100;
+          this.jaaliFilter.Q.value = 2.4;
+          this.jaaliFilter.gain.value = 2.5;
+
+          this.rollOff = this.ctx.createBiquadFilter();
+          this.rollOff.type = 'lowpass';
+          this.rollOff.frequency.value = 5200;
+          this.rollOff.Q.value = 0.7;
+
+          this.masterOut.connect(this.boxFilter);
+          this.boxFilter.connect(this.jaaliFilter);
+          this.jaaliFilter.connect(this.rollOff);
+          this.rollOff.connect(this.ctx.destination);
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      buildReedHarmonics() {
+        const n = 32;
+        const rM = new Float32Array(n);
+        const iM = new Float32Array(n);
+        const mH = [0, 1.0, 0.75, 0.58, 0.42, 0.35, 0.24, 0.18, 0.13, 0.09, 0.06, 0.04, 0.02];
+        for (let i = 1; i < mH.length; i++) iM[i] = mH[i];
+        this.maleProfile = this.ctx.createPeriodicWave(rM, iM);
+
+        const rB = new Float32Array(n);
+        const iB = new Float32Array(n);
+        const bH = [0, 1.0, 0.88, 0.42, 0.32, 0.22, 0.15, 0.10, 0.07, 0.05, 0.03];
+        for (let i = 1; i < bH.length; i++) iB[i] = bH[i];
+        this.bassProfile = this.ctx.createPeriodicWave(rB, iB);
+      }
+
+      midiToFreq(midi) {
+        return 440 * Math.pow(2, (midi - 69) / 12);
+      }
+
+      setBellows(val) {
+        this.airPressure = val;
+        if (this.masterOut && this.ctx) {
+          this.masterOut.gain.setTargetAtTime(val, this.ctx.currentTime, 0.03);
+        }
+      }
+
+      noteOn(midi) {
+        this.initAudio();
+        if (this.activeVoices.has(midi)) this.noteOff(midi);
+
+        const now = this.ctx.currentTime;
+        const freq = this.midiToFreq(midi);
+        const nodesToStop = [];
+
+        const voiceGain = this.ctx.createGain();
+        voiceGain.gain.setValueAtTime(0.0, now);
+        voiceGain.gain.linearRampToValueAtTime(0.38, now + 0.012);
+
+        if (this.enableMale) {
+          const oscM = this.ctx.createOscillator();
+          oscM.setPeriodicWave(this.maleProfile);
+          oscM.frequency.setValueAtTime(freq, now);
+          oscM.detune.setValueAtTime(3.2, now);
+          oscM.connect(voiceGain);
+          oscM.start(now);
+          nodesToStop.push(oscM);
+        }
+
+        if (this.enableBass) {
+          const oscB = this.ctx.createOscillator();
+          oscB.setPeriodicWave(this.bassProfile);
+          oscB.frequency.setValueAtTime(freq * 0.5, now);
+          oscB.detune.setValueAtTime(-2.8, now);
+
+          const bassLevel = this.ctx.createGain();
+          bassLevel.gain.setValueAtTime(0.72, now);
+          oscB.connect(bassLevel);
+          bassLevel.connect(voiceGain);
+          oscB.start(now);
+          nodesToStop.push(oscB);
+        }
+
+        voiceGain.connect(this.masterOut);
+        this.activeVoices.set(midi, { nodes: nodesToStop, gain: voiceGain });
+      }
+
+      noteOff(midi) {
+        if (!this.activeVoices.has(midi)) return;
+        const voice = this.activeVoices.get(midi);
+        this.activeVoices.delete(midi);
+
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+
+        try {
+          voice.gain.gain.cancelScheduledValues(now);
+          voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
+          voice.gain.gain.linearRampToValueAtTime(0.0, now + 0.012);
+        } catch (e) {
+          voice.gain.gain.value = 0;
+        }
+
+        voice.nodes.forEach(n => {
+          try { if (n.stop) n.stop(now + 0.015); } catch (e) {}
+        });
+
+        setTimeout(() => {
+          try { voice.gain.disconnect(); } catch (e) {}
+          voice.nodes.forEach(n => { try { n.disconnect(); } catch (e) {} });
+        }, 30);
+      }
+
+      allNotesOff() {
+        for (const midi of Array.from(this.activeVoices.keys())) {
+          this.noteOff(midi);
+        }
+      }
+
+      setDrone(rootMidi, enable) {
+        this.initAudio();
+        const now = this.ctx.currentTime;
+
+        if (this.droneVoice) {
+          this.droneVoice.gain.gain.linearRampToValueAtTime(0.0, now + 0.03);
+          this.droneVoice.nodes.forEach(n => { try { n.stop(now + 0.04); } catch(e){} });
+          setTimeout(() => {
+            try { this.droneVoice.gain.disconnect(); } catch(e){}
+            this.droneVoice = null;
+          }, 50);
+        }
+
+        if (!enable) return;
+
+        const freq = this.midiToFreq(rootMidi);
+        const dGain = this.ctx.createGain();
+        dGain.gain.setValueAtTime(0.0, now);
+        dGain.gain.linearRampToValueAtTime(0.32, now + 0.06);
+
+        const oscM = this.ctx.createOscillator();
+        oscM.setPeriodicWave(this.maleProfile);
+        oscM.frequency.setValueAtTime(freq, now);
+        oscM.detune.setValueAtTime(2.2, now);
+
+        const oscB = this.ctx.createOscillator();
+        oscB.setPeriodicWave(this.bassProfile);
+        oscB.frequency.setValueAtTime(freq * 0.5, now);
+        oscB.detune.setValueAtTime(-2.2, now);
+
+        oscM.connect(dGain);
+        oscB.connect(dGain);
+        dGain.connect(this.masterOut);
+
+        oscM.start(now);
+        oscB.start(now);
+
+        this.droneVoice = { nodes: [oscM, oscB], gain: dGain };
+      }
+    }
+
+    const engine = new HarmoniumAcousticEngine();
+    const stage = document.getElementById('keyboard-stage');
+    const keysWrapper = document.getElementById('keys-wrapper');
+    const scaleDropdown = document.getElementById('scale-dropdown');
+    const scriptToggle = document.getElementById('script-toggle');
+    const maleStop = document.getElementById('male-stop');
+    const bassStop = document.getElementById('bass-stop');
+    const droneStop = document.getElementById('drone-stop');
+    const bellowsSlider = document.getElementById('bellows-slider');
+
+    let currentScale = 'C#';
+    let useDevanagari = true;
+    let droneActive = false;
+    let keyElementsData = [];
+    const midiToDomMap = new Map();
+
+    function buildKeyboardLayout() {
+      engine.allNotesOff();
+      keysWrapper.innerHTML = '';
+      keyElementsData = [];
+      midiToDomMap.clear();
+
+      const rootIdx = NOTES_LIST.indexOf(currentScale);
+      const madhyaSa = 48 + rootIdx;
+      const rangeStart = madhyaSa - 7;
+      const rangeEnd   = madhyaSa + 17;
+
+      let firstWhite = rangeStart;
+      if (NOTES_LIST[firstWhite % 12].includes('#')) firstWhite -= 1;
+
+      let lastWhite = rangeEnd;
+      if (NOTES_LIST[lastWhite % 12].includes('#')) lastWhite += 1;
+
+      const whiteNotes = [];
+      const blackNotes = [];
+
+      for (let m = firstWhite; m <= lastWhite; m++) {
+        const noteName = NOTES_LIST[m % 12];
+        const isBlack = noteName.includes('#');
+        const inSpan = (m >= rangeStart && m <= rangeEnd);
+        const item = { midi: m, noteName, isBlack, inSpan, octave: Math.floor(m / 12) - 1 };
+
+        if (isBlack) {
+          if (inSpan) blackNotes.push(item);
+        } else {
+          whiteNotes.push(item);
+        }
+      }
+
+      whiteNotes.forEach(wData => {
+        const wEl = document.createElement('div');
+        wEl.className = 'white-key';
+        wEl.dataset.midi = wData.midi;
+        if (!wData.inSpan) wEl.style.opacity = '0.3';
+
+        wEl.innerHTML = `
+          <span class="swara-badge"></span>
+          <span class="pitch-label">${wData.noteName}${wData.octave}</span>
+        `;
+
+        keysWrapper.appendChild(wEl);
+        keyElementsData.push({ el: wEl, data: wData });
+        midiToDomMap.set(wData.midi, wEl);
+      });
+
+      requestAnimationFrame(() => {
+        const totalWhite = whiteNotes.length;
+        const totalWidth = keysWrapper.getBoundingClientRect().width;
+        const whiteW = totalWidth / totalWhite;
+        const blackW = Math.max(whiteW * 0.62, 28);
+
+        blackNotes.forEach(bData => {
+          const leftWhiteIdx = whiteNotes.findIndex(w => w.midi === bData.midi - 1);
+          if (leftWhiteIdx !== -1) {
+            const bEl = document.createElement('div');
+            bEl.className = 'black-key';
+            bEl.dataset.midi = bData.midi;
+            bEl.style.width = `${blackW}px`;
+            bEl.style.left = `${(leftWhiteIdx + 1) * whiteW - (blackW / 2)}px`;
+
+            bEl.innerHTML = `
+              <span class="swara-badge"></span>
+              <span class="pitch-label">${bData.noteName}</span>
+            `;
+
+            keysWrapper.appendChild(bEl);
+            keyElementsData.push({ el: bEl, data: bData });
+            midiToDomMap.set(bData.midi, bEl);
+          }
+        });
+
+        paintSwaraHighlights(madhyaSa);
+      });
+    }
+
+    function paintSwaraHighlights(madhyaSa) {
+      keyElementsData.forEach(({ el, data }) => {
+        if (!data.inSpan) return;
+
+        const interval = (data.midi - madhyaSa) % 12;
+        const normInterval = (interval + 12) % 12;
+        const swara = SWARAS[normInterval];
+        const badge = el.querySelector('.swara-badge');
+        const labelText = useDevanagari ? swara.dev : swara.name;
+
+        let dotTop = '', dotBottom = '';
+        if (data.midi < madhyaSa) {
+          dotBottom = '<span class="saptak-dot">•</span>';
+        } else if (data.midi >= madhyaSa + 12) {
+          dotTop = '<span class="saptak-dot">•</span>';
+        }
+
+        badge.innerHTML = `${dotTop}<span>${labelText}</span>${dotBottom}`;
+        badge.className = 'swara-badge';
+
+        if (swara.type === 'sa') {
+          badge.classList.add('sa-glow');
+        } else if (swara.type === 'shuddha') {
+          badge.classList.add('shuddha-glow');
+        } else {
+          badge.classList.add('komal-glow');
+        }
+      });
+    }
+
+    function keyOn(midi) {
+      if (!midiToDomMap.has(midi)) return;
+      midiToDomMap.get(midi).classList.add('is-pressed');
+      engine.noteOn(midi);
+    }
+
+    function keyOff(midi) {
+      if (!midiToDomMap.has(midi)) return;
+      midiToDomMap.get(midi).classList.remove('is-pressed');
+      engine.noteOff(midi);
+    }
+
+    function stopAllVisualsAndNotes() {
+      document.querySelectorAll('.is-pressed').forEach(el => el.classList.remove('is-pressed'));
+      engine.allNotesOff();
+    }
+
+    function getKeyAtCoord(x, y) {
+      const el = document.elementFromPoint(x, y);
+      return el ? el.closest('.white-key, .black-key') : null;
+    }
+
+    const activePointers = new Map();
+
+    stage.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      engine.initAudio();
+      const key = getKeyAtCoord(e.clientX, e.clientY);
+      if (key) {
+        const midi = Number(key.dataset.midi);
+        activePointers.set(e.pointerId, midi);
+        keyOn(midi);
+      }
+    });
+
+    stage.addEventListener('pointermove', (e) => {
+      if (!activePointers.has(e.pointerId)) return;
+      e.preventDefault();
+      const oldMidi = activePointers.get(e.pointerId);
+      const key = getKeyAtCoord(e.clientX, e.clientY);
+      const newMidi = key ? Number(key.dataset.midi) : null;
+
+      if (newMidi !== oldMidi) {
+        if (oldMidi !== undefined) keyOff(oldMidi);
+        if (newMidi !== null) {
+          activePointers.set(e.pointerId, newMidi);
+          keyOn(newMidi);
+        } else {
+          activePointers.delete(e.pointerId);
+        }
+      }
+    });
+
+    const releasePointer = (e) => {
+      if (activePointers.has(e.pointerId)) {
+        const midi = activePointers.get(e.pointerId);
+        keyOff(midi);
+        activePointers.delete(e.pointerId);
+      }
+      if (activePointers.size === 0) {
+        stopAllVisualsAndNotes();
+      }
+    };
+
+    stage.addEventListener('pointerup', releasePointer);
+    stage.addEventListener('pointercancel', releasePointer);
+    window.addEventListener('pointerup', releasePointer);
+    window.addEventListener('pointercancel', releasePointer);
+
+    window.addEventListener('mouseup', () => {
+      activePointers.clear();
+      stopAllVisualsAndNotes();
+    });
+
+    window.addEventListener('blur', () => {
+      activePointers.clear();
+      stopAllVisualsAndNotes();
+    });
+
+    scaleDropdown.addEventListener('change', (e) => {
+      currentScale = e.target.value;
+      if (droneActive) {
+        const rootMidi = 48 + NOTES_LIST.indexOf(currentScale);
+        engine.setDrone(rootMidi, true);
+      }
+      buildKeyboardLayout();
+    });
+
+    scriptToggle.addEventListener('click', () => {
+      useDevanagari = !useDevanagari;
+      const rootIdx = NOTES_LIST.indexOf(currentScale);
+      paintSwaraHighlights(48 + rootIdx);
+    });
+
+    maleStop.addEventListener('click', () => {
+      engine.enableMale = !engine.enableMale;
+      maleStop.classList.toggle('active', engine.enableMale);
+    });
+
+    bassStop.addEventListener('click', () => {
+      engine.enableBass = !engine.enableBass;
+      bassStop.classList.toggle('active', engine.enableBass);
+    });
+
+    droneStop.addEventListener('click', () => {
+      droneActive = !droneActive;
+      const rootMidi = 48 + NOTES_LIST.indexOf(currentScale);
+      engine.setDrone(rootMidi, droneActive);
+      droneStop.classList.toggle('active', droneActive);
+    });
+
+    bellowsSlider.addEventListener('input', (e) => {
+      engine.setBellows(parseFloat(e.target.value));
+    });
+
+    window.addEventListener('resize', () => buildKeyboardLayout());
+    window.addEventListener('DOMContentLoaded', () => buildKeyboardLayout());
+  </script>
+</body>
+</html>
